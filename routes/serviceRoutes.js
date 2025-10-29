@@ -1,22 +1,33 @@
-const express = require('express');
-const router = express.Router();
-const {
-  createService,
-  getAllServices,
-  getServiceById,
-  updateService,
-  deleteService
-} = require('../controllers/serviceController');
-
-// Route for getting all services and creating a new one
-router.route('/')
-  .get(getAllServices)
-  .post(createService);
-
-// Route for getting, updating, and deleting a single service by ID
-router.route('/:id')
-  .get(getServiceById)
-  .put(updateService)
-  .delete(deleteService);
-
-module.exports = router;
+    const express = require('express');
+    const router = express.Router();
+    const {
+      createService,
+      getAllServices,
+      getServiceById,
+      updateService,
+      deleteService
+    } = require('../controllers/serviceController');
+    const authController = require('../controllers/authController');
+    
+    router.route('/')
+      .get(getAllServices) 
+      .post(
+        authController.protect,
+        authController.restrictTo('admin'),
+        createService
+      );
+    
+    router.route('/:id')
+      .get(getServiceById)
+      .put(
+        authController.protect,
+        authController.restrictTo('admin'),
+        updateService
+      )
+      .delete(
+        authController.protect,
+        authController.restrictTo('admin'),
+        deleteService
+      );
+    
+    module.exports = router;

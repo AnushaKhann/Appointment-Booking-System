@@ -4,14 +4,14 @@ const AppointmentSchema = new mongoose.Schema({
   // Link to the ServiceProvider model
   provider: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'ServiceProvider', // This refers to the 'ServiceProvider' model
-    required: true,
+    ref: 'ServiceProvider',
+    required: [true, 'An appointment must have a provider.'],
   },
   // Link to the Service model
   service: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Service', // This refers to the 'Service' model
-    required: true,
+    ref: 'Service',
+    required: [true, 'Please provide the required service.'],
   },
   // Customer details
   customerName: {
@@ -29,14 +29,32 @@ const AppointmentSchema = new mongoose.Schema({
     type: Date,
     required: [true, "Please provide the appointment date and time"],
   },
-  // Status of the appointment
   status: {
     type: String,
-    enum: ['Scheduled', 'Completed', 'Cancelled'],
-    default: 'Scheduled',
+    enum: ['Pending', 'Confirmed', 'Completed', 'Cancelled'],
+    default: 'Pending',
+  },
+  // This links the appointment to the user who booked it.
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'An appointment must belong to a user.'],
   },
 }, {
   timestamps: true,
 });
 
+// This will auto-populate the provider and service fields
+AppointmentSchema.pre(/^find/, function(next) {
+  this.populate({
+    path: 'provider',
+    select: 'name specialty',
+  }).populate({
+    path: 'service',
+    select: 'name duration price',
+  });
+  next();
+});
+
 module.exports = mongoose.model('Appointment', AppointmentSchema);
+
