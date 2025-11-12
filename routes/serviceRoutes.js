@@ -5,20 +5,33 @@
       getAllServices,
       getServiceById,
       updateService,
-      deleteService
+      deleteService,
+      getServiceStats, // 1. Import the new function
     } = require('../controllers/serviceController');
     const authController = require('../controllers/authController');
-    
-    router.route('/')
-      .get(getAllServices) 
+
+    // 2. Add the new route here
+    // This route should also be admin-only
+    router
+      .route('/stats')
+      .get(
+        authController.protect,
+        authController.restrictTo('admin'),
+        getServiceStats
+      );
+
+    router
+      .route('/')
+      .get(getAllServices) // Public for anyone to see
       .post(
         authController.protect,
         authController.restrictTo('admin'),
         createService
       );
-    
-    router.route('/:id')
-      .get(getServiceById)
+
+    router
+      .route('/:id')
+      .get(getServiceById) // Public for anyone to see
       .put(
         authController.protect,
         authController.restrictTo('admin'),
@@ -29,5 +42,5 @@
         authController.restrictTo('admin'),
         deleteService
       );
-    
+
     module.exports = router;

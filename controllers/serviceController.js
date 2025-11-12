@@ -3,18 +3,37 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
 
-// @desc    Create a new service
-// @route   POST /api/services
-exports.createService = catchAsync(async (req, res, next) => {
-  const newService = new Service(req.body);
-  await newService.save();
-  res.status(201).json({
+// @desc    Get stats about services
+// @route   GET /api/services/stats
+exports.getServiceStats = catchAsync(async (req, res, next) => {
+  // The aggregate pipeline is an array of "stages"
+  const stats = await Service.aggregate([
+    {
+      // Stage 1: Group all services together
+      $group: {
+        _id: null, // Group all documents into one
+        numServices: { $sum: 1 }, // Count the total number of services
+        avgPrice: { $avg: '$price' }, // Calculate the average price
+        avgDuration: { $avg: '$duration' }, // Calculate the average duration
+        minPrice: { $min: '$price' }, // Find the minimum price
+        maxPrice: { $max: '$price' }, // Find the maximum price
+      },
+    },
+    {
+      // Stage 2 (Optional): Sort the results
+      $sort: {
+        avgPrice: 1, // Sort by average price (1 = ascending)
+      },
+    },
+  ]);
+
+  res.status(200).json({
     success: true,
-    data: newService,
+    data: stats,
   });
 });
 
-// @desc    Get all services
+// @desc    Get all services (with filtering, sorting, etc.)
 // @route   GET /api/services
 exports.getAllServices = catchAsync(async (req, res, next) => {
   // 1) Create the APIFeatures object
@@ -32,6 +51,17 @@ exports.getAllServices = catchAsync(async (req, res, next) => {
     success: true,
     count: services.length,
     data: services,
+  });
+});
+
+// @desc    Create a new service
+// @route   POST /api/services
+exports.createService = catchAsync(async (req, res, next) => {
+  const newService = new Service(req.body);
+  await newService.save();
+  res.status(201).json({
+    success: true,
+    data: newService,
   });
 });
 
